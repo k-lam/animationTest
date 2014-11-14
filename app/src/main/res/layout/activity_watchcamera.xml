@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="#ffffff"
+    android:orientation="horizontal"
+    android:layout_gravity="bottom">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/preview_ly"
+        >
+        <kl.animationtest.CameraPreview
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:id="@+id/preview"
+            />
+        <kl.animationtest.CoverPlate
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:id="@+id/coverPlate"
+            />
+        </FrameLayout>
+
+    <Button
+        android:id="@+id/btn_takephoto"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical|right"
+        android:layout_weight="1.0"
+        android:text="咔嚓" />
+</merge>
