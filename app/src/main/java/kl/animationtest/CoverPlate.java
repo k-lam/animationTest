@@ -38,36 +38,21 @@ public class CoverPlate extends View {
     }
 
 
-    WatchCameraActivity.Size size;
+    WatchCameraActivity.ClipRect clipRect;
     Rect rect = new Rect();
-    public void setClipRect(WatchCameraActivity.Size size){
-       this.size = size;
+    public void setClipRect(WatchCameraActivity.ClipRect clipRect){
+       this.clipRect = clipRect;
     }
-
-
-
 
     @Override
     protected void onDraw(Canvas canvas) {
         int h = getHeight();
         int w = getWidth();
-        Log.i("debugC","Cover:w"+getWidth() + ",h:"+getHeight());
-//        int w_padding = w / 8;
-//        int h_padding = (h - (((w - w_padding << 1) * 3) >> 2)) >> 1;
-
-//        rect.set(0,0,w,h_padding);
-//
-//        canvas.drawRect(rect,paint);
-//
-//        rect.set(0,h - h_padding,w,h);
-//
-//        canvas.drawRect(rect,paint);
-        int h_padding = (h - size.h) >> 1;
-        int w_padding = (w - size.w) >> 1;
-        rect.left = w_padding;
-        rect.top = h_padding;
-        rect.right = w - w_padding;
-        rect.bottom = h - h_padding;
+        Log.i("debugC","onDraw Cover:w"+getWidth() + ",h:"+getHeight());
+        rect.left = clipRect.x;
+        rect.top = clipRect.y;
+        rect.right = clipRect.size.w + clipRect.x;
+        rect.bottom = clipRect.size.h + clipRect.y;
 
         paint.setColor(Color.argb(200,200,200,0));
         paint.setStrokeWidth(5);
