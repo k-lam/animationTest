@@ -15,9 +15,9 @@ import java.io.IOException;
  */
 public class CameraPreview extends SurfaceView implements
         SurfaceHolder.Callback {
-    Camera mCamera;
+    CameraEasyManager mCameraMgr;
     SurfaceHolder mHolder;
-
+    WatchCameraActivity mActivity;
     public CameraPreview(Context context) {
         super(context);
     }
@@ -30,26 +30,21 @@ public class CameraPreview extends SurfaceView implements
         super(context, attrs, defStyle);
     }
 
-    public void init(Camera camera) {
-        mCamera = camera;
+    public void init(CameraEasyManager cm,WatchCameraActivity watchCameraActivity) {
+        mActivity = watchCameraActivity;
+        mCameraMgr = cm;
         // Install a SurfaceHolder.Callback so we get notified when the
         // underlying surface is created and destroyed.
         mHolder = getHolder();
         mHolder.addCallback(this);
         // deprecated setting, but required on Android versions prior to 3.0
         // mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-
         try {
-            mCamera.setPreviewDisplay(mHolder);
-            mCamera.startPreview();
+            cm.mCamera.setPreviewDisplay(mHolder);
+            cm.mCamera.startPreview();
         } catch (Exception e) {
             Log.d("debug", "Error setting camera preview: " + e.getMessage());
         }
-    }
-
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
     }
 
     @Override
@@ -57,8 +52,9 @@ public class CameraPreview extends SurfaceView implements
         // The Surface has been created, now tell the camera where to draw the
         // preview.
         try {
-            mCamera.setPreviewDisplay(holder);
-            mCamera.startPreview();
+            mCameraMgr.mCamera.setPreviewCallback(previewCallback);
+            mCameraMgr.mCamera.setPreviewDisplay(holder);
+            mCameraMgr.mCamera.startPreview();
         } catch (Exception e) {
             Log.d("debug", "Error setting camera preview: " + e.getMessage());
         }
@@ -76,7 +72,7 @@ public class CameraPreview extends SurfaceView implements
 
         // stop preview before making changes
         try {
-            mCamera.stopPreview();
+            mCameraMgr.mCamera.stopPreview();
         } catch (Exception e) {
             // ignore: tried to stop a non-existent preview
         }
@@ -86,8 +82,9 @@ public class CameraPreview extends SurfaceView implements
 
         // start preview with new settings
         try {
-            mCamera.setPreviewDisplay(mHolder);
-            mCamera.startPreview();
+            mCameraMgr.mCamera.setPreviewCallback(previewCallback);
+            mCameraMgr.mCamera.setPreviewDisplay(mHolder);
+            mCameraMgr.mCamera.startPreview();
 
         } catch (Exception e) {
             Log.d("debug", "Error starting camera preview: " + e.getMessage());
@@ -97,7 +94,18 @@ public class CameraPreview extends SurfaceView implements
     @Override
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
         // empty. Take care of releasing the Camera preview in your activity.
-        mCamera.release();
+        mCameraMgr.release();
         Log.i("debug", "camera release");
     }
+
+    final Camera.PreviewCallback previewCallback = new Camera.PreviewCallback() {
+        @Override
+        public void onPreviewFrame(byte[] data, Camera camera) {
+            if(mCameraMgr.shouldTakePreView()){
+               mActivity.bitmap_tmp =  mCameraMgr.getPreviewFrame(data);
+                mCameraMgr.mCamera.takePicture(null, null,mActivity);
+                mCameraMgr.finishTakePreview();
+            }
+        }
+    };
 }
