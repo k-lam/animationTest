@@ -110,7 +110,7 @@ public class CameraPreview extends SurfaceView implements
         public void onPreviewFrame(byte[] data, Camera camera) {
             if(mCameraMgr.shouldTakePreView()){
                 mCameraMgr.mCamera.takePicture(null, null,mActivity);
-                if(!mCameraMgr.getPreviewClipZone(data,mActivity.mZone.getClipRectInPreview(),mActivity)){
+                if(!mCameraMgr.getPreviewClipZone(data,mActivity.mZone.getClipRectInPreview(),mActivity,mActivity.mZone)){
                     Toast.makeText(mActivity,"截图失败，manner = 3",Toast.LENGTH_SHORT).show();
                 }
             }
