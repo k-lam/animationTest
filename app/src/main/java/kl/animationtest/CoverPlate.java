@@ -38,9 +38,9 @@ public class CoverPlate extends View {
     }
 
 
-    WatchCameraActivity.ClipRect clipRect;
+    ClipRect clipRect;
     Rect rect = new Rect();
-    public void setClipRect(WatchCameraActivity.ClipRect clipRect){
+    public void setClipRect(ClipRect clipRect){
        this.clipRect = clipRect;
     }
 

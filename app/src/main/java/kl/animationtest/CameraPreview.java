@@ -1,12 +1,14 @@
 package kl.animationtest;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.hardware.Camera;
+import android.widget.Toast;
 
 import java.io.IOException;
 
@@ -52,7 +54,9 @@ public class CameraPreview extends SurfaceView implements
         // The Surface has been created, now tell the camera where to draw the
         // preview.
         try {
-            mCameraMgr.mCamera.setPreviewCallback(previewCallback);
+           // if(mActivity.mZone == null || mActivity.mZone.manner == -1 || mActivity.mZone.manner == 3) {
+                mCameraMgr.mCamera.setPreviewCallback(previewCallback);
+           // }
             mCameraMgr.mCamera.setPreviewDisplay(holder);
             mCameraMgr.mCamera.startPreview();
         } catch (Exception e) {
@@ -82,7 +86,9 @@ public class CameraPreview extends SurfaceView implements
 
         // start preview with new settings
         try {
-            mCameraMgr.mCamera.setPreviewCallback(previewCallback);
+           // if(mActivity.mZone == null || mActivity.mZone.manner == -1 || mActivity.mZone.manner == 3) {
+                mCameraMgr.mCamera.setPreviewCallback(previewCallback);
+            //}
             mCameraMgr.mCamera.setPreviewDisplay(mHolder);
             mCameraMgr.mCamera.startPreview();
 
@@ -94,6 +100,7 @@ public class CameraPreview extends SurfaceView implements
     @Override
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
         // empty. Take care of releasing the Camera preview in your activity.
+//        mCameraMgr.mCamera.stopPreview();
         mCameraMgr.release();
         Log.i("debug", "camera release");
     }
@@ -102,9 +109,10 @@ public class CameraPreview extends SurfaceView implements
         @Override
         public void onPreviewFrame(byte[] data, Camera camera) {
             if(mCameraMgr.shouldTakePreView()){
-               mActivity.bitmap_tmp =  mCameraMgr.getPreviewFrame(data);
                 mCameraMgr.mCamera.takePicture(null, null,mActivity);
-                mCameraMgr.finishTakePreview();
+                if(!mCameraMgr.getPreviewClipZone(data,mActivity.mZone.getClipRectInPreview(),mActivity)){
+                    Toast.makeText(mActivity,"截图失败，manner = 3",Toast.LENGTH_SHORT).show();
+                }
             }
         }
     };

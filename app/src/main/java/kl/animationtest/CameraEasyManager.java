@@ -1,5 +1,6 @@
 package kl.animationtest;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
@@ -16,8 +17,12 @@ public class CameraEasyManager {
     Camera mCamera;
     boolean hasReleased = true;
 
-    public CameraEasyManager(Camera c){
-        mCamera = c;
+    public CameraEasyManager(){
+    }
+
+    public Camera open(){
+        mCamera = Camera.open();
+        return mCamera;
     }
 
     public void release(){
@@ -55,5 +60,10 @@ public class CameraEasyManager {
     }
 
     private boolean shouldTakePreView;
-}
 
+
+    public boolean getPreviewClipZone(byte[] data,Rect clipRect,Context context){
+
+        return  false;
+    }
+}

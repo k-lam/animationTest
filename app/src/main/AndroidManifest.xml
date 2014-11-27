@@ -48,9 +48,8 @@
             </activity>
         <activity
             android:name=".SensorActivity"
-            android:label="@string/title_activity_scroller"
-            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
-            android:screenOrientation="landscape">
+            android:label="@string/title_activity_scroller">
+
         </activity>
     </application>
 

@@ -4,12 +4,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.hardware.Camera;
-import android.media.Image;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -28,9 +25,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import bolts.Task;
@@ -39,6 +33,7 @@ import bolts.Task;
  * 由于android camera分为preview size，picture size。而且两个size的aspect ratio会不一样（如：4:3,16:9）
  * 而用来显示preview的view的大小比例必须和preview size的一样，如果不是，会出现扭曲形变。
  * 所以我们允许preview size比屏幕大，屏幕内的叫做显示区。
+ * 实现在FourZone这个类中
  * Created by KL on 2014/11/13.
  */
 public class WatchCameraActivity extends Activity implements Camera.PictureCallback{
@@ -47,11 +42,8 @@ public class WatchCameraActivity extends Activity implements Camera.PictureCallb
     //Camera mCamera;
     CoverPlate coverPlate;
     View mPreview_ly;
-    ClipRect clipRect;
-    //由于camera没有查询是否release的状态
-    boolean released = true;
-    SizeResult sizeResult;
-    Bitmap bitmap_tmp;
+    FourZone mZone;
+//    Bitmap bitmap_tmp;
     CameraEasyManager mCameraMgr;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,13 +55,14 @@ public class WatchCameraActivity extends Activity implements Camera.PictureCallb
         findViewById(R.id.btn_takephoto).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(!released) {
-                    if(sizeResult.manner == 3){
+                Log.i("debugC","mCameraMgr is null:" + (mCameraMgr == null));
+                if(mCameraMgr != null){Log.i("debugC"," has released ? " + mCameraMgr.hasReleased());}
+                if(mCameraMgr != null && !mCameraMgr.hasReleased()) {
+                    if(mZone.manner == 3){
                        mCameraMgr.takePictureFromPreview();
                     }else {
                         mCameraMgr.mCamera.takePicture(null, null, WatchCameraActivity.this);
                     }
-
                 }
             }
         });
@@ -89,7 +82,7 @@ public class WatchCameraActivity extends Activity implements Camera.PictureCallb
                 params.width = size.width;
                 mPreview_ly.setLayoutParams(params);
                 Log.i("debugC", "reLayout");
-                coverPlate.setClipRect(clipRect);
+                coverPlate.setClipRect(mZone.clipRect);
             }
        // }
     }
@@ -101,13 +94,20 @@ public class WatchCameraActivity extends Activity implements Camera.PictureCallb
         mCameraMgr.release();
     }
 
+    Runnable takePhoneRunnable = new Runnable() {
+        @Override
+        public void run() {
+
+        }
+    };
+
     /** A safe way to get an instance of the Camera object. */
     public  CameraEasyManager getCameraInstance() {
+        CameraEasyManager cm = new CameraEasyManager();
         Camera c = null;
         try {
-            c = Camera.open(); // attempt to get a Camera instance
+            c = cm.open(); // attempt to get a Camera instance
             if(c != null){
-                CameraEasyManager cm = new CameraEasyManager(c);
                 Camera.Parameters parameters = c.getParameters();
                 parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
                 parameters.setFlashMode(Camera.Parameters.FLASH_MODE_AUTO);
@@ -115,34 +115,34 @@ public class WatchCameraActivity extends Activity implements Camera.PictureCallb
                 List<Camera.Area> ls_a = new ArrayList<Camera.Area>();
                 ls_a.add(area);
                 parameters.setFocusAreas(ls_a);
-                //下面这两句有问题，要判断屏幕方向
+                //下面这两句有问题，要判断屏幕方向,但是不同的机器测试的结果不一样！
                 int h = getResources().getDisplayMetrics().heightPixels;
                 int w = getResources().getDisplayMetrics().widthPixels;
-
                 if(w < h){
                     int tmp = w;
                     w = h;
                     h = tmp;
                 }
-                sizeResult = caculateBestSize(c,w,h,w - 150);
+                mZone = new FourZone(c);
+                mZone.caculateBestSize(w,h,w - 150);
+                //sizeResult = caculateBestSize(c,w,h,w - 150);
                 Log.i("debugC","window:" + w + "*" + h);
-                Camera.Size size = sizeResult.sizes[0];
+                Camera.Size size = mZone.size_preview;
                 Log.i("debugC","preview:" + size.width + "*" + size.height);
                 parameters.setPreviewSize(size.width,size.height);
-                Camera.Size tSize = c.new Size(w,h);
-                if(sizeResult.manner != 3){
-                    parameters.setPictureSize(sizeResult.sizes[1].width,sizeResult.sizes[1].height);
+                //Camera.Size tSize = c.new Size(w,h);
+                if(mZone.manner != 3){
+                    parameters.setPictureSize(mZone.size_picture.width,mZone.size_picture.height);
                 }
                 c.setParameters(parameters);
-                clipRect = new ClipRect();
-                clipRect.size = new Size();
-                clipRect.size = calculateClipZone(tSize);
-                clipRect.setClipRect(size);
-                released = false;
+//                clipRect = new ClipRect();
+//                clipRect.size = new Size();
+//                clipRect.size = calculateClipZone(tSize);
+//                clipRect.setClipRect(size);
+//                released = false;
                 return  cm;
             }
         } catch (Exception e) {
-            // Camera is not available (in use or does not exist)
             Log.e("debugC",e.getMessage());
             e.printStackTrace();
         }
@@ -161,98 +161,14 @@ public class WatchCameraActivity extends Activity implements Camera.PictureCallb
 //    }
 
     /**
-     *
-     * @param camera
-     * @param W  希望显示区域的阔度
-     * @param H  希望显示区域的宽度
-     * @param controlAreaLine  控制区位置
-     * @return
-     */
-    SizeResult caculateBestSize(Camera camera,final int W,final int H,final int controlAreaLine){
-        //1.aspect ratio一样的，比全屏大的
-        //2.aspect ratio一样的，不超过deadline的
-        //3.不管ratio了，直接用preview的图像，不用相机返回的数据
-        RatioMap<Camera.Size> preview_Map = new RatioMap<Camera.Size>();
-        RatioMap<Camera.Size> picture_Map = new RatioMap<Camera.Size>();
-
-        //计算preview 和 picture 的aspect ratio
-        for(Camera.Size size : camera.getParameters().getSupportedPreviewSizes()){
-            preview_Map.putIn(new Float_Here((float)size.width / size.height), size);
-        }
-        for(Camera.Size size : camera.getParameters().getSupportedPictureSizes()){
-            picture_Map.putIn(new Float_Here((float)size.width / size.height),size);
-        }
-
-        //获取preview和picture中相等的aspect ratio
-        List<Float_Here> ls_ratio = new LinkedList<Float_Here>();
-        for(Float_Here key : preview_Map.keySet()){
-            if(picture_Map.containsKey(key)){
-                ls_ratio.add(key);
-            }
-        }
-
-        String s = "the same ratio:";
-        for(Float_Here key : ls_ratio){
-            s +=(" ratio:" + key.getValue() + "pre:");
-            for(Camera.Size size : preview_Map.get(key)){
-                s += (size.width + "*" + size.height + ",");
-            }
-            s += "; pic:";
-            for(Camera.Size size : preview_Map.get(key)){
-                s += (size.width + "*" + size.height + ",");
-            }
-            s += "||||";
-        }
-        Log.i("debugC",s);
-
-        Camera.Size[] sizes = new Camera.Size[2];
-        //1.aspect ratio一样的，比全屏大的
-        for(Float_Here key : ls_ratio){
-            sizes[0] = getJustLargerSzie(camera,W,H,preview_Map.get(key));
-            if(sizes[0].width != 0){
-                sizes[1] = getJustLargerSzie(camera,sizes[0].width,sizes[0].height,picture_Map.get(key));
-            }
-            if(sizes[0].width != 0 && sizes[1].width != 0){
-                return  new SizeResult(sizes,1);
-            }else {
-                //clean
-                sizes[0] = sizes[1] = null;
-            }
-        }
-
-        //2.aspect ratio一样的，不超过deadline的
-//        for(Float_Here key : ls_ratio){
-//            if(key.getValue() * W <= controlAreaLine){
-//                for(Camera.Size size : preview_Map.get(key)){
-//                    if(size.height == H){
-//                        sizes[0] = size;
-//                        break;
-//                    }
-//                }
-//                sizes[1] = getJustLargerSzie(camera,sizes[0].width,sizes[0].height,picture_Map.get(key));
-//                if(sizes[0].width != 0 && sizes[1].width != 0){
-//                    return new SizeResult(sizes,2);
-//                }else {
-//                    //clean
-//                    sizes[0] = sizes[1] = null;
-//                }
-//            }
-//        }
-
-        //3.不管ratio了，直接用preview的图像，不用相机返回的数据
-       // sizes[0] = findBestSize(camera,W,H);
-        sizes[0] = getJustLargerSzie(camera,W,H,camera.getParameters().getSupportedPreviewSizes());
-        return new SizeResult(sizes,3);
-    }
-
-    /**
      * sizes[0] preview size
      * sizes[1] picture size,当manner = 3时，为空
+     * sizes[2] 显示区size
      * manner 1 : preview size 和picture size的aspect ratio一样，preview size 大于等于显示区
      * （停用）manner 2:  preview size 和picture size的aspect ratio一样, preview size 等比例缩放后， 不会超过预设的控制区
      * manner 3： preview size 大于等于显示区，sizes[1] 为空，应该用preview的图。
      */
-    static class SizeResult{
+    public static class SizeResult{
         Camera.Size[] sizes;
         int manner;
 
@@ -275,134 +191,51 @@ public class WatchCameraActivity extends Activity implements Camera.PictureCallb
         return c.new Size(w,h);
     }
 
-    static class Float_Here{
-        float value;
-        public Float_Here(float f){
-            value = f;
-        }
-
-        float getValue(){
-            return value;
-        }
-
-        @Override
-        public String toString() {
-            return "" +(float)(Math.round(value * 100)) / 100;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if(o instanceof Float_Here){
-                if(value - ((Float_Here)o).getValue() < 0.01f){
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public int hashCode() {
-            float f  =  (float)(Math.round(value * 1000)) / 1000;
-            return new Float(f).hashCode();
-        }
-    }
-
-    static class RatioMap<V> extends HashMap<Float_Here, List<V>> {
-
-        public void putIn(Float_Here key, V value) {
-            List list = null;
-            if (containsKey(key)) {
-                list = get(key);
-                list.add(value);
-
-            } else {
-                list = new ArrayList<V>();
-                list.add(value);
-                put(key,list);
-            }
-        }
-    }
-
-    /**
-     * @param size  显示空间
-     * @return 裁剪大小size
-     */
-    //size 必须width比height大
-    Size calculateClipZone(Camera.Size size){
-        final int decrement = size.width >> 4;
-        Size result = new Size(size.width,0);
-        while(true){
-            result.w -= decrement;
-            result.h = (result.w >> 2) * 3;
-            if(result.h < size.height){
-                return result;
-            }
-            if(result.h <= 0 || result.w <= 0){
-                return new Size(300,400);
-            }
-        }
-    }
 
     @Override
     public void onPictureTaken(byte[] bytes, Camera camera) {
-        Bitmap bitmap_Source = null;
-        ClipRect clipRectInSource = new ClipRect(clipRect);
-        if(sizeResult.manner == 3){
-           // bitmap_Source = getPreViewBitmap(mPreview);
-            bitmap_Source = bitmap_tmp;
-        }else {
-            bitmap_Source =  BitmapFactory.decodeByteArray(bytes,0,bytes.length);
+        if(mZone.manner != 3){
+            Bitmap bitmap_Source =  BitmapFactory.decodeByteArray(bytes,0,bytes.length);
+            ClipRect clipRectInSource = new ClipRect(mZone.clipRect);
             Camera.Size size_preview = camera.getParameters().getPreviewSize();
-            clipRectInSource.x += (sizeResult.sizes[0].width - mPreview.getWidth()) / 2;
-            clipRectInSource.y += (sizeResult.sizes[0].height - mPreview.getHeight()) / 2;
+            clipRectInSource.x += (mZone.size_preview.width - mPreview.getWidth()) / 2;
+            clipRectInSource.y += (mZone.size_preview.height - mPreview.getHeight()) / 2;
             float scaleFactor = ((float)camera.getParameters().getPictureSize().height) / size_preview.height;
             clipRectInSource.x *= scaleFactor;
             clipRectInSource.y *= scaleFactor;
             clipRectInSource.size.h *= scaleFactor;
             clipRectInSource.size.w *= scaleFactor;
-        }
-        Log.i("debugC","picture w:" +bitmap_Source.getWidth() + ",h:"+bitmap_Source.getHeight());
-        Matrix matrix = new Matrix();
-        matrix.setRotate(90f);
-        //这里有bug
-        Bitmap bitmap_clip = Bitmap.createBitmap(bitmap_Source,clipRectInSource.x,clipRectInSource.y,clipRectInSource.size.w,clipRectInSource.size.h,matrix,true);
-        bitmap_Source.recycle();
-        Bitmap bitmap_compressed = Bitmap.createScaledBitmap(bitmap_clip,300,400,true);
-        bitmap_clip.recycle();
-        //改成另外一条线程执行
-        try {
-            FileOutputStream fos = this.openFileOutput("tmp.jpg",
-                    Context.MODE_PRIVATE);
-            final BufferedOutputStream bos = new BufferedOutputStream(fos,
-                    16384);
-            if(bitmap_compressed.compress(Bitmap.CompressFormat.JPEG, 50, bos)){
-                Log.i("debugC","bos success");
-            }else {
-                Log.i("debugC","bos failes");
+            Log.i("debugC","picture w:" +bitmap_Source.getWidth() + ",h:"+bitmap_Source.getHeight());
+            Matrix matrix = new Matrix();
+            matrix.setRotate(90f);
+            Bitmap bitmap_clip = Bitmap.createBitmap(bitmap_Source,clipRectInSource.x,clipRectInSource.y,clipRectInSource.size.w,clipRectInSource.size.h,matrix,true);
+            bitmap_Source.recycle();
+            Bitmap bitmap_compressed = Bitmap.createScaledBitmap(bitmap_clip,300,400,true);
+            bitmap_clip.recycle();
+            //改成另外一条线程执行
+            try {
+                FileOutputStream fos = this.openFileOutput("tmp.jpg",
+                        Context.MODE_PRIVATE);
+                final BufferedOutputStream bos = new BufferedOutputStream(fos,
+                        16384);
+                if(bitmap_compressed.compress(Bitmap.CompressFormat.JPEG, 50, bos)){
+                    Log.i("debugC","bos success");
+                }else {
+                    Log.i("debugC","bos failes");
+                }
+                bos.flush();
+                bos.close();
+                fos.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            bos.flush();
-            bos.close();
-            fos.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-       // upload_img(bitmap_compressed);
+       //upload_img();
     }
 
-    public Bitmap getPreViewBitmap(CameraPreview preview){
-//        preview.setDrawingCacheEnabled(true);
-//        preview.buildDrawingCache();
-//        Bitmap bmp = Bitmap.createBitmap(preview.getDrawingCache());
-//        preview.setDrawingCacheEnabled(false);
-        Bitmap bitmap = Bitmap.createBitmap(preview.getWidth(),preview.getHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        preview.draw(canvas);
-        return bitmap;
-    }
-
-    public void upload_img(final Bitmap bitmap){
+    public void upload_img(){
         Task.callInBackground(new Callable<Object>() {
             @Override
             public Object call() throws Exception {
@@ -428,26 +261,25 @@ public class WatchCameraActivity extends Activity implements Camera.PictureCallb
         });
     }
 
-
-    static class ClipRect{
-        Size size;
-        int x,y;
-
-        public void setClipRect(Camera.Size outSize){
-            if(outSize.height >= size.h && outSize.width >= size.w){
-                x = (outSize.width - size.w) >> 1;
-                y = (outSize.height - size.h) >> 1;
-            }
-        }
-
-        public ClipRect(){}
-
-        public ClipRect(ClipRect crect){
-            this.size = new Size(crect.size.w,crect.size.h);
-            this.x = crect.x;
-            this.y = crect.y;
-        }
-    }
+//    static class ClipRect{
+//        Size size;
+//        int x,y;
+//
+//        public void setClipRect(Camera.Size outSize){
+//            if(outSize.height >= size.h && outSize.width >= size.w){
+//                x = (outSize.width - size.w) >> 1;
+//                y = (outSize.height - size.h) >> 1;
+//            }
+//        }
+//
+//        public ClipRect(){}
+//
+//        public ClipRect(ClipRect crect){
+//            this.size = new Size(crect.size.w,crect.size.h);
+//            this.x = crect.x;
+//            this.y = crect.y;
+//        }
+//    }
 
     static class Size{
         int w;

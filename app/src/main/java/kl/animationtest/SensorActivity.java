@@ -10,6 +10,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
+import java.text.DecimalFormat;
+
 /**
  * Created by Administrator on 2014/11/18.
  */
@@ -70,19 +72,20 @@ public class SensorActivity extends Activity {
             @Override
             public void onClick(View view) {
                 SensorManager.getRotationMatrix(MR,MI,gravity,geomagnetic);
-//                String sr = "R:",si = "I:";
-//                for(int i = 0; i != MR.length;i++){
-//                    sr += (i+":" + MR[i] + ", ");
-//                    si += (i+":" + MI[i] + ", ");
-//                }
-                SensorManager.getOrientation(MR,orientation);
-                String s = "orientation";
-                for(float f : orientation){
-                    s += f + ",";
+                String sr = "R:",si = "I:";
+                for(int i = 0; i != MR.length;i++){
+                    sr += (i+":" + toFriendlyFormat( MR[i] )+ ", ");
+                    si += (i+":" + MI[i] + ", ");
                 }
-                Log.i("sensor",s);
-//                Log.i("sensor",sr);
+                Log.i("sensor",sr);
 //                Log.i("sensor",si);
+                SensorManager.getOrientation(MR,orientation);
+                String s = "orientation ";
+                for(float f : orientation){
+                    s += (toFriendlyFormat(f) + " , ");
+                }
+                Log.i("sensor",s + " ; " + toFriendlyFormat(SensorManager.getInclination(MI)));
+                Log.i("sensor","rotation:" + getWindowManager().getDefaultDisplay().getRotation());
             }
         });
     }
@@ -109,5 +112,11 @@ public class SensorActivity extends Activity {
         if(mSensor_MAGNETIC != null){
             mSensorManager.unregisterListener(listener_ma);
         }
+    }
+
+    DecimalFormat fnum  =  new  DecimalFormat("##0.000");
+
+    String toFriendlyFormat(float value){
+        return fnum.format(value);
     }
 }
