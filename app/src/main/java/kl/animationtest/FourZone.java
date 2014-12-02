@@ -13,7 +13,7 @@ public class FourZone {
     public Camera.Size size_picture;
     public Camera.Size size_preview;
     public Camera.Size size_displayZone;
-    public int manner = -1;
+    public int manner = -1;//manner = 1,manner = 2停用
     /**
      * 相对于displayZone的
      */
@@ -68,7 +68,7 @@ public class FourZone {
 //        Log.i("debugC",s);
 //        Camera.Size[] sizes = new Camera.Size[3];
 
-        //1.aspect ratio一样的，比全屏大的
+//        1.aspect ratio一样的，比全屏大的
 //        for(Float_Here key : ls_ratio){
 //            size_preview = getJustLargerSzie(mCamera,W,H,preview_Map.get(key));
 //            if(size_preview.width != 0){

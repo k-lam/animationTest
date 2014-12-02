@@ -135,11 +135,6 @@ public class WatchCameraActivity extends Activity implements Camera.PictureCallb
                     parameters.setPictureSize(mZone.size_picture.width,mZone.size_picture.height);
                 }
                 c.setParameters(parameters);
-//                clipRect = new ClipRect();
-//                clipRect.size = new Size();
-//                clipRect.size = calculateClipZone(tSize);
-//                clipRect.setClipRect(size);
-//                released = false;
                 return  cm;
             }
         } catch (Exception e) {

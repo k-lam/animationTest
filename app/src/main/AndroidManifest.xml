@@ -40,16 +40,23 @@
 
         </activity>
         <activity android:name=".mainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
             </activity>
         <activity
             android:name=".SensorActivity"
             android:label="@string/title_activity_scroller">
 
+        </activity>
+        <activity
+            android:name=".MeshTestActivity">
+        </activity>
+        <activity
+            android:name=".ObjAnimationTest">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
     </application>
 

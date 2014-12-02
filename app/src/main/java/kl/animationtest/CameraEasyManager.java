@@ -104,7 +104,7 @@ public class CameraEasyManager {
             Bitmap bitmap_rotate = Bitmap.createBitmap(bitmapCliped,0,0,bitmapCliped.getWidth(),bitmapCliped.getHeight(),matrix,true);
             bitmapCliped.recycle();
             Bitmap bitmap = Bitmap.createScaledBitmap(bitmap_rotate,300,400,true);
-            bitmap_rotate.recycle();;
+            bitmap_rotate.recycle();
             FileOutputStream fos = context.openFileOutput("tmp.jpg",
                     Context.MODE_PRIVATE);
             final BufferedOutputStream bos = new BufferedOutputStream(fos,

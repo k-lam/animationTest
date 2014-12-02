@@ -2,16 +2,24 @@ package kl.animationtest;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import kl.animationtest.R;
 
 public class ScrollerActivity extends Activity {
 
+    int i = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scroller);
+        findViewById(R.id.vv).postOnAnimation(new Runnable() {
+            @Override
+            public void run() {
+                Log.i("anim1", "has run " + ++i + "times");
+            }
+        });
     }
 
 
