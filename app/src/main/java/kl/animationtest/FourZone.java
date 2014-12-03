@@ -55,7 +55,7 @@ public class FourZone {
         }
 //        String s = "the same ratio:";
 //        for(Float_Here key : ls_ratio){
-//            s +=(" ratio:" + key.getValue() + "pre:");
+//            s +=(" ratio:" + key.getTranslation() + "pre:");
 //            for(Camera.Size size : preview_Map.get(key)){
 //                s += (size.width + "*" + size.height + ",");
 //            }
@@ -90,7 +90,7 @@ public class FourZone {
 
         //2.aspect ratio一样的，不超过deadline的
 //        for(Float_Here key : ls_ratio){
-//            if(key.getValue() * W <= controlAreaLine){
+//            if(key.getTranslation() * W <= controlAreaLine){
 //                for(Camera.Size size : preview_Map.get(key)){
 //                    if(size.height == H){
 //                        sizes[0] = size;
