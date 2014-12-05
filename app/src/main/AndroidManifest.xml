@@ -52,6 +52,10 @@
         </activity>
         <activity
             android:name=".ObjAnimationTest">
+        </activity>
+
+        <activity
+            android:name=".Activity_Shader">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

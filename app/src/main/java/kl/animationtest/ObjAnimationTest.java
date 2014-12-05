@@ -1,5 +1,6 @@
 package kl.animationtest;
 
+import android.animation.AnimatorInflater;
 import android.animation.AnimatorSet;
 import android.animation.Keyframe;
 import android.animation.ObjectAnimator;
@@ -21,6 +22,7 @@ import java.security.Key;
 public class ObjAnimationTest extends Activity {
     View btn_hs;
     View btn_hs_ctrler;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,6 +76,16 @@ public class ObjAnimationTest extends Activity {
             @Override
             public void onClick(View v) {
                 rotationAnim.start();
+            }
+        });
+
+        final View btn_vpa = findViewById(R.id.btn_vpa);
+        final AnimatorSet animatorSet = (AnimatorSet) AnimatorInflater.loadAnimator(this,R.animator.show_in);
+        animatorSet.setTarget(btn_vpa);
+        btn_vpa.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                animatorSet.start();
             }
         });
     }
