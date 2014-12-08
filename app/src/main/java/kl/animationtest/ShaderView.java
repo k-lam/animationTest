@@ -14,9 +14,9 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-
 import java.util.LinkedList;
 import java.util.List;
+import pl.droidsonroids.gif.GifDrawable;
 
 /**
  * Created by Administrator on 2014/12/5.
@@ -55,7 +55,10 @@ public class ShaderView extends View {
         paint = new Paint();
         paint.setShader(shader);
         paint.setAntiAlias(true);
-        final Bitmap bitmapTmp = BitmapFactory.decodeResource(getResources(),R.drawable.spot_mask);
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inSampleSize = 5;
+        options.inScaled = true;
+        final Bitmap bitmapTmp = BitmapFactory.decodeResource(getResources(),R.drawable.glow,options);
         bitmapMask = Bitmap.createBitmap(bitmapTmp.getWidth(),bitmapTmp.getHeight(),Bitmap.Config.ALPHA_8);
         Canvas canvas = new Canvas(bitmapMask);
         canvas.drawBitmap(bitmapTmp,0f,0f,null);
@@ -65,54 +68,38 @@ public class ShaderView extends View {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 points.add(new Coordinate(event.getX(),event.getY()));
-                tPoints = new Coordinate(event.getX() - bitmapMask.getWidth() / 2,event.getY() - bitmapMask.getHeight() / 2);
+                tPoints = new Coordinate(event.getX() - 100,event.getY() - 100);
+//                tPoints = new Coordinate(event.getX() - bitmapMask.getWidth() / 2,event.getY() - bitmapMask.getHeight() / 2);
                 invalidate();
                 return true;
             }
         });
+
+    }
+
+    Matrix matrix = new Matrix();
+    boolean isFirst = true;
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        super.dispatchDraw(canvas);
+    }
+
+    @Override
+    public void draw(Canvas canvas) {
+        super.draw(canvas);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-       RectF rect = new RectF(0.0f, 0.0f, getWidth(), getHeight());
-        //paint.setColor(Color.BLUE);
-        //canvas.drawRoundRect(rect,30f,30f,paint);
-       // canvas.drawBitmap(bitmapMask,(getWidth() / 2f) - 50,(getHeight() / 2f) - 50,paint);
-//        for(Coordinate c : points){
-//            canvas.drawBitmap(bitmapMask,c.x,c.y,paint);
-//        }
-        //bgCanvas.drawBitmap(bi);
         if(bgCanvas == null){
             bgBitmap = Bitmap.createBitmap(getWidth(),getHeight(),Bitmap.Config.ARGB_8888);
             bgCanvas = new Canvas(bgBitmap);
-            //bgCanvas.setMatrix(new Matrix());
-            //paint.getShader().setLocalMatrix(new Matrix());
         }
         if(tPoints != null) {
-            bgCanvas.drawColor(Color.BLACK);
-            Matrix matrix = new Matrix();
-            matrix.setTranslate(-50,-50);
-            paint.getShader().setLocalMatrix(matrix);
-            bgCanvas.drawBitmap(bitmapMask, (getWidth() / 2f) - 50, (getHeight() / 2f) - 50, paint);
-            bgCanvas.drawBitmap(bitmapMask,(getWidth() / 2f) - 100,(getHeight() / 2f) - 100,paint);
-           // matrix.setTranslate(100,100);
-            //paint.getShader().setLocalMatrix(matrix);
-            bgCanvas.drawBitmap(bitmapMask,(getWidth() / 2f),(getHeight() / 2f),paint);
-           // matrix.setTranslate(50,50);
-           // paint.getShader().setLocalMatrix(matrix);
-            bgCanvas.drawBitmap(bitmapMask,(getWidth() / 2f) + 50,(getHeight() / 2f) + 50,paint);
-            //bgCanvas.drawBitmap(bitmapMask, tPoints.x, tPoints.y, paint);
-            //bgCanvas.drawRoundRect(rect,30f,30f,paint);
-            //Log.i("shader","bgCanvas:" + bgCanvas.getWidth() + "*" + bgCanvas.getHeight() + "tPoints:(" + tPoints.x + "," + tPoints.y+")");
+            bgCanvas.drawCircle(tPoints.x,tPoints.y,100f,paint);
         }
         canvas.drawBitmap(bgBitmap,0,0,null);
-        if(tPoints != null) {
-//            canvas.drawBitmap(bitmapMask,(getWidth() / 2f) - 50,(getHeight() / 2f) - 50,paint);
-//            canvas.drawBitmap(bitmapMask,(getWidth() / 2f) - 100,(getHeight() / 2f) - 100,paint);
-//            canvas.drawBitmap(bitmapMask,(getWidth() / 2f),(getHeight() / 2f),paint);
-//            canvas.drawBitmap(bitmapMask,(getWidth() / 2f) + 50,(getHeight() / 2f) + 50,paint);
-            //canvas.drawBitmap(bitmapMask, tPoints.x, tPoints.y, paint);
-        }
     }
 
     static class Coordinate{

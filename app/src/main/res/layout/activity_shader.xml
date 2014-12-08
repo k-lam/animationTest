@@ -5,6 +5,7 @@
     android:layout_height="match_parent"
     android:background="@android:color/black">
 <kl.animationtest.ShaderView
-    android:layout_width="467px"
-    android:layout_height="467px" />
+    android:layout_width="700px"
+    android:layout_height="700px" />
+
 </LinearLayout>

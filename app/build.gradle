@@ -27,6 +27,7 @@ dependencies {
     //apach http
     //compile 'org.apache.james:apache-mime4j:0.7.2'
     compile 'org.apache.httpcomponents:httpclient:4.3.2'
+    compile 'pl.droidsonroids.gif:android-gif-drawable:1.0.+'
    // compile 'org.apache.httpcomponents:httpcore:4.3.3'
     //compile 'org.apache.httpcomponents:httpmime:4.3.6'
     //compile files('libs/bolts.jar')
